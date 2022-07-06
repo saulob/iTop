@@ -363,6 +363,7 @@ return array(
     'Combodo\\iTop\\Renderer\\FieldRenderer' => $baseDir . '/sources/Renderer/FieldRenderer.php',
     'Combodo\\iTop\\Renderer\\FormRenderer' => $baseDir . '/sources/Renderer/FormRenderer.php',
     'Combodo\\iTop\\Renderer\\RenderingOutput' => $baseDir . '/sources/Renderer/RenderingOutput.php',
+    'Combodo\\iTop\\Service\\Cron\\CronLog' => $baseDir . '/sources/Service/Cron/CronLog.php',
     'CompileCSSService' => $baseDir . '/application/compilecssservice.class.inc.php',
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
     'Config' => $baseDir . '/core/config.class.inc.php',

@@ -728,6 +728,7 @@ class ComposerStaticInit7f81b4a2a468a061c306af5e447a9a9f
         'Combodo\\iTop\\Renderer\\FieldRenderer' => __DIR__ . '/../..' . '/sources/Renderer/FieldRenderer.php',
         'Combodo\\iTop\\Renderer\\FormRenderer' => __DIR__ . '/../..' . '/sources/Renderer/FormRenderer.php',
         'Combodo\\iTop\\Renderer\\RenderingOutput' => __DIR__ . '/../..' . '/sources/Renderer/RenderingOutput.php',
+        'Combodo\\iTop\\Service\\Cron\\CronLog' => __DIR__ . '/../..' . '/sources/Service/Cron/CronLog.php',
         'CompileCSSService' => __DIR__ . '/../..' . '/application/compilecssservice.class.inc.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Config' => __DIR__ . '/../..' . '/core/config.class.inc.php',
