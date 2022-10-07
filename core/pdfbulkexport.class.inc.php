@@ -190,18 +190,23 @@ EOF
 		return $sPDF;
 	}
 
+	/**
+	 * @param \DBObject $oObj
+	 * @param string $sAttCode
+	 *
+	 * @return int|string
+	 * @throws \Exception
+	 */
 	protected function GetValue($oObj, $sAttCode)
 	{
-		switch($sAttCode)
-		{
+		switch ($sAttCode) {
 			case 'id':
 				$sRet = parent::GetValue($oObj, $sAttCode);
 				break;
 
 			default:
 				$value = $oObj->Get($sAttCode);
-				if ($value instanceof ormDocument)
-				{
+				if ($value instanceof ormDocument) {
 					$oAttDef = MetaModel::GetAttributeDef(get_class($oObj), $sAttCode);
 					if ($oAttDef instanceof AttributeImage)
 					{
@@ -209,22 +214,31 @@ EOF
 						//
 						$iDefaultMaxWidthPx = 48;
 						$iDefaultMaxHeightPx = 48;
-						if ($value->IsEmpty())
-						{
+						if ($value->IsEmpty()) {
 							$iNewWidth = $iDefaultMaxWidthPx;
 							$iNewHeight = $iDefaultMaxHeightPx;
 
 							$sUrl = $oAttDef->Get('default_image');
-						}
-						else
-						{
-							list($iWidth, $iHeight) = utils::GetImageSize($value->GetData());
+						} else {
 							$iMaxWidthPx = min($iDefaultMaxWidthPx, $oAttDef->Get('display_max_width'));
 							$iMaxHeightPx = min($iDefaultMaxHeightPx, $oAttDef->Get('display_max_height'));
 
-							$fScale = min($iMaxWidthPx / $iWidth, $iMaxHeightPx / $iHeight);
-							$iNewWidth = $iWidth * $fScale;
-							$iNewHeight = $iHeight * $fScale;
+							list($iWidth, $iHeight) = utils::GetImageSize($value->GetData());
+							if (($iWidth === 0) && ($iHeight === 0)) {
+								// avoid division by zero exception :/
+								$iNewWidth = $iDefaultMaxWidthPx;
+								$iNewHeight = $iDefaultMaxHeightPx;
+								IssueLog::Warning('AttributeImage : cannot read image size', LogChannels::EXPORT, [
+									'ObjClass'        => get_class($oObj),
+									'ObjKey'          => $oObj->GetKey(),
+									'ObjFriendlyName' => $oObj->GetName(),
+									'AttCode'         => $sAttCode,
+								]);
+							} else {
+								$fScale = min($iMaxWidthPx / $iWidth, $iMaxHeightPx / $iHeight);
+								$iNewWidth = $iWidth * $fScale;
+								$iNewHeight = $iHeight * $fScale;
+							}
 
 							$sUrl = 'data:'.$value->GetMimeType().';base64,'.base64_encode($value->GetData());
 						}
