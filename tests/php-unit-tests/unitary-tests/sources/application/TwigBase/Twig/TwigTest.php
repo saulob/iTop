@@ -11,7 +11,7 @@ class TwigTest extends ItopTestCase
 	/**
 	 * Test the fix for ticket N°4384
 	 *
-	 * @dataProvider testTemplateProvider
+	 * @dataProvider TemplateProvider
 	 *
 	 */
 	public function testTemplate($sFileName, $expected)
@@ -22,12 +22,12 @@ class TwigTest extends ItopTestCase
 	    $this->assertSame($sHtml, $expected);
 	}
 
-	public static function testTemplateProvider()
+	public static function TemplateProvider()
 	{
 		$aReturn = array();
 		$aReturn['filter_system'] = [
 				'sFileName' => 'test.html',
-				'expected' =>file_get_contents(dirname(__FILE__).'/test.html'),
+				'expected' => file_get_contents(dirname(__FILE__).'/test.html'),
 			];
 
 		return $aReturn;
