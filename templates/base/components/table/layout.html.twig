@@ -1,5 +1,11 @@
 {# @copyright   Copyright (C) 2010-2022 Combodo SARL #}
 {# @license     http://opensource.org/licenses/AGPL-3.0 #}
 {% apply spaceless %}
+    <table id="{{ oUIBlock.GetId() }}" class="ibo-table"></table>
 
+    {% set datatableJSImplementation = oUIBlock.CreateDatatableJSImplementation() %}
+    <div>
+{#    {{ datatableJSImplementation.GetAllJS() }}#}
+{#        {{ datatableJSImplementation.GetData()|json_encode|raw }}#}
+    </div>
 {% endapply %}

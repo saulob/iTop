@@ -6,13 +6,21 @@
 
 use Combodo\iTop\Application\UI\Base\Component\DataTable\DataTableUIBlockFactory;
 use Combodo\iTop\Application\UI\Base\Component\DataTable\StaticTable\FormTableRow\FormTableRow;
-use Combodo\iTop\Application\UI\Links\Indirect\BlockIndirectLinksEdit\BlockIndirectLinksEdit;
+use Combodo\iTop\Application\UI\Base\Component\DataTable\TableUIBlockFactory;
+use Combodo\iTop\Application\UI\Base\Component\Panel\PanelUIBlockFactory;
+use Combodo\iTop\Application\UI\Base\Component\Table\Editor\ConsoleTableCellEditor;
+use Combodo\iTop\Application\UI\Base\Component\Table\Renderer\ConsoleTableCellRenderer;
+use Combodo\iTop\Application\UI\Base\Component\Table\Renderer\NumberCellRenderer;
+use Combodo\iTop\Application\UI\Base\Component\Table\TableColumn;
+use Combodo\iTop\Application\UI\Base\Component\Table\TableRow;
 use Combodo\iTop\Application\UI\Links\Indirect\BlockObjectPickerDialog\BlockObjectPickerDialog;
 use Combodo\iTop\Renderer\Console\ConsoleBlockRenderer;
+use Combodo\iTop\Application\UI\Base\Component\Table\Data\AttributeData;
+use Combodo\iTop\Application\UI\Links\Indirect\BlockIndirectLinksEdit\BlockIndirectLinksEdit;
 
 require_once(APPROOT.'application/displayblock.class.inc.php');
 
-class UILinksWidget 
+class UILinksWidget
 {
 	protected $m_sClass;
 	protected $m_sAttCode;
@@ -398,19 +406,128 @@ JS
 				}
 
 				$iMaxAddedId = max($iMaxAddedId, $key);
-				$aForm[$key] = $this->GetFormRow($oPage, $oLinkedObj, $oCurrentLink, $aArgs, $oCurrentObj, $key, $bReadOnly);
+//				$aForm[$key] = $this->GetFormRow($oPage, $oLinkedObj, $oCurrentLink, $aArgs, $oCurrentObj, $key, $bReadOnly);
 			}
 		}
 		$oBlock->iMaxAddedId = (int)$iMaxAddedId;
 
-		$oDataTable = DataTableUIBlockFactory::MakeForForm("{$this->m_sAttCode}{$this->m_sNameSuffix}", $this->m_aTableConfig, $aForm);
-		$oDataTable->SetOptions(['select_mode' => 'custom', 'disable_hyperlinks' => true]);
-		$oBlock->AddSubBlock($oDataTable);
+		$oValue->Rewind();
+		$oBlock->AddSubBlock($this->CreateBlockTestRelations($oValue, $oCurrentObj, $aArgs));
+//		$oBlock->AddSubBlock($this->CreateBlockTestStatic());
+//		$oBlock->AddSubBlock($this->CreateOldTableRelations($aForm));
+
+		$oBlock->AddJsFileRelPath('/js/extkeywidget.js');
+		$oBlock->AddJsFileRelPath('/js/forms-json-utils.js');
 
 		$oBlock->AddControls();
 
 		return ConsoleBlockRenderer::RenderBlockTemplateInPage($oPage, $oBlock);
 	}
+
+
+	private function CreateOldTableRelations($aForm)
+	{
+		$oDataTable = DataTableUIBlockFactory::MakeForForm("{$this->m_sAttCode}{$this->m_sNameSuffix}", $this->m_aTableConfig, $aForm);
+		$oDataTable->SetOptions(['select_mode' => 'custom', 'disable_hyperlinks' => true]);
+
+		return $oDataTable;
+	}
+
+	private function CreateBlockTestRelations($oValue, $oCurrentObj, $aArgs)
+	{
+
+		$oPanel = PanelUIBlockFactory::MakeNeutral('Relations');
+
+		// create table ui block
+		$oTableBlock = TableUIBlockFactory::Make("{$this->m_sAttCode}{$this->m_sNameSuffix}", $this->GetTableColumns());
+		$oTableBlock->SetCellRenderer(new ConsoleTableCellRenderer($oTableBlock));
+		$oTableBlock->SetCellEditor(new ConsoleTableCellEditor($oTableBlock));
+		$oTableBlock->EnableEditionMode();
+//		$oTableBlock->AddJsFileRelPath('/js/form_field.js');
+//		$oTableBlock->AddJsFileRelPath('/js/extkeywidget.js');
+//		$oTableBlock->AddJsFileRelPath('/js/forms-json-utils.js');
+
+		while ($oCurrentLink = $oValue->Fetch()) {
+
+			// retrieve remote object
+			$oRemoteObject = MetaModel::GetObject($this->m_sRemoteClass, $oCurrentLink->Get($this->m_sExtKeyToRemote), false /* Must not be found */);
+
+			// create a new row data
+			$aRowData = array();
+
+			// add link editable fields...
+			foreach ($this->m_aEditableFields as $sFieldCode) {
+				$aRowData[$sFieldCode] = new AttributeData($oCurrentLink, $sFieldCode);
+				$aRowData[$sFieldCode]->InitArgs($aArgs, $oCurrentObj, $oRemoteObject, $oCurrentLink, $this->m_sAttCode, $this->m_sNameSuffix, $this->m_iInputId, $this->m_sRemoteClass, $this->m_sExtKeyToRemote, false);
+			}
+
+			// add remote object attributes...
+			foreach (MetaModel::GetZListItems($this->m_sRemoteClass, 'list') as $sFieldCode) {
+				$aRowData[$sFieldCode] = new AttributeData($oRemoteObject, $sFieldCode);
+				$aRowData[$sFieldCode]->InitArgs($aArgs, $oCurrentObj, $oRemoteObject, $oCurrentLink, $this->m_sAttCode, $this->m_sNameSuffix, $this->m_iInputId, $this->m_sRemoteClass, $this->m_sExtKeyToRemote, false);
+			}
+
+			$oTableBlock->AddRow(new TableRow($aRowData));
+		}
+
+		$oTableBlock->RenderData();
+
+		$oPanel->AddSubBlock($oTableBlock);
+
+		return $oPanel;
+	}
+
+	private function CreateBlockTestStatic()
+	{
+		$oPanel = PanelUIBlockFactory::MakeForInformation('Static');
+
+		// create table ui block
+		$oTableBlock = TableUIBlockFactory::Make("static{$this->m_sAttCode}{$this->m_sNameSuffix}", [
+			TableColumn::Make('lastname', 'Nom'),
+			TableColumn::Make('firstname', 'Prénom'),
+			TableColumn::Make('active', 'Actif'),
+			TableColumn::Make('factor', 'Facteur')->SetCellRenderer(new NumberCellRenderer('%', 1)),
+		]);
+		$oTableBlock->SetCellRenderer(new ConsoleTableCellRenderer($oTableBlock));
+
+		$oTableBlock->AddRow(new TableRow(['lastname' => 'DALSASS', 'firstname' => 'Benjamin', 'active' => true, 'factor' => 3.36]));
+		$oTableBlock->AddRow(new TableRow(['lastname' => 'LEBRUN', 'firstname' => 'Luc', 'active' => false, 'factor' => 1.25]));
+		$oTableBlock->AddRow(new TableRow(['lastname' => 'LAMB', 'firstname' => 'Thierry', 'active' => true, 'factor' => 0.25]));
+
+		$oTableBlock->RenderData();
+
+		$oPanel->AddSubBlock($oTableBlock);
+
+		return $oPanel;
+	}
+
+
+	/**
+	 * Return columns for indirect links table.
+	 *
+	 * @return array
+	 */
+	private function GetTableColumns(): array
+	{
+		$aColumns = array();
+
+		// iterate throw editable fields...
+		foreach ($this->m_aEditableFields as $sFieldCode) {
+			$aColumns[] = TableColumn::Make($sFieldCode, $sFieldCode)
+				->SetEditable(true);
+		}
+
+		// iterate throw remote attributes definitions...
+		$aRemoteAttDefsToDisplay = MetaModel::GetZListAttDefsFilteredForIndirectRemoteClass($this->m_sRemoteClass);
+		foreach ($aRemoteAttDefsToDisplay as $oRemoteAttDef) {
+			$sRemoteAttCode = $oRemoteAttDef->GetCode();
+			$aColumns[] = TableColumn::Make($sRemoteAttCode, $oRemoteAttDef->GetLabel())
+				->SetSortable(true);
+		}
+
+		return $aColumns;
+	}
+
 
 	/**
 	 * @param string $sClass

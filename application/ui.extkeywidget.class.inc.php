@@ -270,6 +270,7 @@ class UIExtKeyWidget
 			$sJsonOptions = str_replace("'", "\'", str_replace('\\', '\\\\', json_encode($aOptions)));
 			$oPage->add_ready_script(
 				<<<EOF
+		alert($sWizHelper);
 		oACWidget_{$this->iId} = new ExtKeyWidget('{$this->iId}', '{$this->sTargetClass}', '$sFilter', '$sTitle', true, $sWizHelper, '{$this->sAttCode}', $sJSSearchMode, $sJSDoSearch);
 		oACWidget_{$this->iId}.emptyHtml = "<div style=\"background: #fff; border:0; text-align:center; vertical-align:middle;\"><p>$sMessage</p></div>";
 		oACWidget_{$this->iId}.AddSelectize('$sJsonOptions','$value');
