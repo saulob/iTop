@@ -360,13 +360,18 @@ class iTopDesignFormat
 
 	/**
 	 * @param \DOMNode|null $node
+	 * @param bool $bFormatOutput
+	 * @param bool $bPreserveWhiteSpace
 	 *
 	 * @return false|string
 	 *
 	 * @uses \DOMDocument::saveXML()
 	 */
-	public function GetXmlAsString($node = null)
+	public function GetXmlAsString($node = null, $bFormatOutput = true, $bPreserveWhiteSpace = false)
 	{
+		$this->oDocument->formatOutput = $bFormatOutput;
+		$this->oDocument->preserveWhiteSpace = $bPreserveWhiteSpace;
+
 		return $this->oDocument->saveXML($node = null);
 	}
 

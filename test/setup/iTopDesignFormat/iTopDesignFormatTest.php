@@ -51,7 +51,8 @@ class iTopDesignFormatTest extends ItopTestCase
 			$this->assertEquals($sFirstErrorMessage, $aErrors[0]);
 		}
 
-		$sConvertedXml = $oInputDesignFormat->GetXmlAsString();
+		/** @noinspection PhpRedundantOptionalArgumentInspection We REALLY want those options so specifying it anyway */
+		$sConvertedXml = $oInputDesignFormat->GetXmlAsString(null, true, false);
 		// Erase dynamic values
 		$sConvertedXml = preg_replace('@<trashed_node id="\w+"@', '<trashed_node id="XXX"', $sConvertedXml);
 		$this->assertEquals($sExpectedXml, $sConvertedXml);
@@ -62,9 +63,9 @@ class iTopDesignFormatTest extends ItopTestCase
 		$oInputDocument = new DOMDocument();
 		/** @noinspection PhpComposerExtensionStubsInspection */
 		libxml_clear_errors();
+		$oInputDocument->formatOutput = true;
 		$oInputDocument->preserveWhiteSpace = false;
 		$oInputDocument->loadXML($sFileContent);
-		$oInputDocument->formatOutput = true;
 
 		return new iTopDesignFormat($oInputDocument);
 	}
