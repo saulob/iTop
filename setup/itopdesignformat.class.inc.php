@@ -994,7 +994,9 @@ class iTopDesignFormat
 	}
 	/**
 	 * Upgrade the format from version 3.0 to 3.1
+	 *
 	 * @param \ModelFactory $oFactory
+	 *
 	 * @return void (Errors are logged)
 	 */
 	protected function From30To31($oFactory)
@@ -1004,13 +1006,49 @@ class iTopDesignFormat
 		// N°5563 AttributeLinkedSet
 		// - move edit_mode attribute to legacy_edit_mode attribute
 		// - fill relation_type & read_only
-		//TODO
+		$oLinkedSetNodes = $oXPath->query("/itop_design/classes/class/fields/field[@xsi:type='AttributeLinkedSet']");
+		/** @var \DOMElement $oNode */
+		foreach ($oLinkedSetNodes as $oNode) {
+			$sEditMode = 'actions';
+			if ($oNode->hasChildNodes()) {
+				$oLinkedSetEditModeNodes = $oNode->getElementsByTagName('edit_mode');
+				if ($oLinkedSetEditModeNodes) {
+					$oEditModeNode = $oLinkedSetEditModeNodes->item(0);
+					/** @noinspection NullPointerExceptionInspection already checked */
+					$sEditMode = $oEditModeNode->nodeValue;
+					$oLegacyEditModeNode = $oNode->ownerDocument->createElement('legacy_edit_mode', $sEditMode);
+					/** @noinspection NullPointerExceptionInspection already checked */
+					$oNode->replaceChild($oLegacyEditModeNode, $oEditModeNode);
+				}
+
+				switch ($sEditMode) {
+					case 'none':
+						$sRelationType = 'link';
+						$sReadOnly = 'true';
+						break;
+					case 'add_only':
+					case 'add_remove':
+					case 'actions':
+						$sRelationType = 'link';
+						$sReadOnly = 'false';
+						break;
+					case 'in_place':
+						$sRelationType = 'property';
+						$sReadOnly = 'false';
+						break;
+				}
+
+				$oRelationTypeNode = $oNode->ownerDocument->createElement('relation_type', $sRelationType);
+				$oNode->appendChild($oRelationTypeNode);
+				$oReadOnlyNode = $oNode->ownerDocument->createElement('read_only', $sReadOnly);
+				$oNode->appendChild($oReadOnlyNode);
+			}
+		}
 
 		// N°5563 AttributeLinkedSetIndirect
 		// - fill read_only attribute
-		$oNodeList = $oXPath->query("/itop_design/classes/class/fields/field[@xsi:type='AttributeLinkedSetIndirect']");
-		/** @var \DOMElement $oNode */
-		foreach ($oNodeList as $oNode) {
+		$oLinkedSetIndirectNodes = $oXPath->query("/itop_design/classes/class/fields/field[@xsi:type='AttributeLinkedSetIndirect']");
+		foreach ($oLinkedSetIndirectNodes as $oNode) {
 			$oReadOnlyNode = $oNode->ownerDocument->createElement('read_only', 'false');
 			$oNode->appendChild($oReadOnlyNode);
 		}
