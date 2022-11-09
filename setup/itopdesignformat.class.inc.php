@@ -999,6 +999,8 @@ class iTopDesignFormat
 	 */
 	protected function From30To31($oFactory)
 	{
+		$oXPath = new DOMXPath($this->oDocument);
+
 		// N°5563 AttributeLinkedSet
 		// - move edit_mode attribute to legacy_edit_mode attribute
 		// - fill relation_type & read_only
@@ -1006,7 +1008,12 @@ class iTopDesignFormat
 
 		// N°5563 AttributeLinkedSetIndirect
 		// - fill read_only attribute
-		//TODO
+		$oNodeList = $oXPath->query("/itop_design/classes/class/fields/field[@xsi:type='AttributeLinkedSetIndirect']");
+		/** @var \DOMElement $oNode */
+		foreach ($oNodeList as $oNode) {
+			$oReadOnlyNode = $oNode->ownerDocument->createElement('read_only', 'false');
+			$oNode->appendChild($oReadOnlyNode);
+		}
 	}
 	/**
 	 * Downgrade the format from version 3.1 to 3.0
