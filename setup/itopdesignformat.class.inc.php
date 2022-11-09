@@ -999,7 +999,12 @@ class iTopDesignFormat
 	 */
 	protected function From30To31($oFactory)
 	{
-		//nothing
+		//FIXME N°5563 convert edit_mode
+		// N°5563 AttributeLinkedSet
+		// - move edit_mode attribute to legacy_edit_mode attribute
+		// - fill relation_type & read_only
+		// N°5563 AttributeLinkedSetIndirect
+		// - fill read_only attribute
 	}
 	/**
 	 * Downgrade the format from version 3.1 to 3.0
