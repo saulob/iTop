@@ -145,6 +145,51 @@ const CombodoCKEditorHandler = {
 		editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
 			return new SimpleUploadAdapter(loader);
 		};
+
+		// Upload images pasted from a web page instead of keeping their external URL
+		// The clipboard then contains both the HTML (<img src="external URL">) and the image file, but the default
+		// ImageUploadEditing listener ignores files as soon as there is HTML, so we handle this case before it.
+		// Default behavior is kept when the HTML has real content besides images (eg. Excel cells come with a PNG of the table)
+		editor.editing.view.document.on('clipboardInput', (evt, data) => {
+			const oDataTransfer = data.dataTransfer;
+			const sHtml = oDataTransfer.getData('text/html') || '';
+			// Without HTML (eg. screenshot), files are already uploaded by the default listener
+			if (sHtml === '') {
+				return;
+			}
+
+			const aImageTypes = editor.config.get('image.upload.types');
+			const oUploadImageCommand = editor.commands.get('uploadImage');
+			if (!Array.isArray(aImageTypes) || !oUploadImageCommand || !oUploadImageCommand.isEnabled) {
+				return;
+			}
+
+			const oImageTypesRegExp = new RegExp('^image\\/(' + aImageTypes.map(sType => sType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')$');
+			const aFiles = Array.from(oDataTransfer.files).filter(oFile => oFile && oImageTypesRegExp.test(oFile.type));
+			if (aFiles.length === 0) {
+				return;
+			}
+
+			// Keep default behavior if the HTML has more images than files or any real content besides images
+			const oPastedDoc = new DOMParser().parseFromString(sHtml, 'text/html');
+			if (oPastedDoc.body.querySelectorAll('img').length > aFiles.length) {
+				return;
+			}
+			oPastedDoc.body.querySelectorAll('img, picture, source').forEach(oElem => oElem.remove());
+			if (oPastedDoc.body.textContent.trim() !== '' || oPastedDoc.body.querySelector('table, video, audio, iframe, embed, object, svg, canvas') !== null) {
+				return;
+			}
+
+			// Pasted content is only images, upload them through the upload adapter
+			evt.stop();
+			editor.model.change(writer => {
+				if (data.targetRanges) {
+					writer.setSelection(data.targetRanges.map(oViewRange => editor.editing.mapper.toModelRange(oViewRange)));
+				}
+				editor.execute('uploadImage', {file: aFiles});
+			});
+		}, {priority: 'high'});
+
 		this.is_upload_configured[sElem] = true;
 	},
 	InsertHtmlInsideInstance: function(sElem, sHtml){
